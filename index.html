@@ -105,6 +105,16 @@ button.nav:hover{background:rgba(255,255,255,.08);color:#fff}
 button.nav.on{background:rgba(255,255,255,.14);color:#fff;border-left-color:#d4a64a;font-weight:bold}
 .side-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.15);padding-top:12px}
 @media(max-width:760px){#app{flex-direction:column}#side{width:auto;height:auto;position:static;flex-direction:row;flex-wrap:wrap;padding:10px;gap:4px}body.has-data #side{display:flex}.brand,.side-foot{display:none}button.nav{width:auto}}
+.sfb{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px}
+.sf{display:flex;flex-direction:column;gap:5px}
+.sfl{font-size:11px;font-weight:bold;letter-spacing:.05em;color:var(--mut)}
+button.sfb1{min-width:200px;max-width:300px;padding:8px 12px}
+button.sfb1.act{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
+button.pill{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:16px;padding:6px 13px;font-size:13px}
+button.pill.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sbadge{padding:8px 12px;border-radius:6px;background:var(--bg);border:1px solid var(--bd);font-size:13px;font-weight:bold;color:var(--ac)}
+.dda{display:flex;gap:12px;font-size:12px;margin-bottom:6px;color:var(--ac)}
+.dda span{cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -115,6 +125,7 @@ button.nav.on{background:rgba(255,255,255,.14);color:#fff;border-left-color:#d4a
   <button class="nav" id="tMed">🩺 Médicos</button>
   <button class="nav" id="tDet">📋 Detalle</button>
   <button class="nav" id="tProd">💊 Medicamentos</button>
+  <button class="nav" id="tServ">🧾 Servicios</button>
   <div class="side-foot">
     <button class="nav" id="adj">⚙ Ajustar columnas</button>
     <button class="nav" id="reset2">📂 Cambiar archivo</button>
@@ -161,6 +172,7 @@ button.nav.on{background:rgba(255,255,255,.14);color:#fff;border-left-color:#d4a
     <input type="hidden" id="mrg" value="135">
   </div>
   <div id="slicers" style="display:none;gap:12px;flex-wrap:wrap;margin-bottom:12px"></div>
+  <div id="servFilters" style="display:none;margin-bottom:12px"></div>
   <div class="scroll"><table class="pv" id="pv"></table></div>
   <div class="msg" style="display:none">Con tabla dinámica solo se muestran las semanas que ya tienen datos. Con datos crudos se usa tu columna Semana (Primera, Segunda, Tercera, Cuarta); si no hay, por fecha: semana 1 = días 1-7, 2 = 8-14, 3 = 15-21, 4 = 22 en adelante. Pacientes = pacientes distintos (si no eliges columna de paciente, se cuentan filas). TOTAL = Total monto ÷ Total pacientes. Desviación = TOTAL ÷ CPM − 1. Haz clic en TOTAL o DESVIAC % para ordenar: rojo arriba, luego amarillo y luego verde (otro clic invierte el orden). Color de TOTAL y DESVIAC %: verde si TOTAL es menor a 135, amarillo de 135 hasta 192.7 y rojo si supera 192.7 (el límite rojo es el CPM de arriba).</div>
 </div>
@@ -172,14 +184,15 @@ let wb=null,aoa=[],result=null,pv=null,lastOk=false,sortDir=null,view='esp';
 const norm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 let detData=null,collapsed=new Set();
 function setTabs(){
-  ['Esp','Med','Det','Prod'].forEach((k,n)=>$('t'+k).classList.toggle('on',view===['esp','med','det','prod'][n]));
-  const dp=view==='det'||view==='prod';
+  ['Esp','Med','Det','Prod','Serv'].forEach((k,n)=>$('t'+k).classList.toggle('on',view===['esp','med','det','prod','serv'][n]));
+  const dp=view==='det'||view==='prod'||view==='serv';
+  $('servFilters').style.display=view==='serv'?'block':'none';
   $('cpmLbl').style.display=dp?'none':'';
   $('qLbl').style.display=dp?'':'none';
   $('slicers').style.display=view==='det'?'flex':'none';
   if(!dp)$('q').value='';
 }
-function sheetFor(v){const re=v==='prod'?/^\s*all\s*farmacia\s*$/i:v==='det'?/^\s*detalles?\s+m[eé]dicos\s*$/i:v==='med'?/^\s*m[eé]dicos\s*$/i:/^\s*especialidades\s*$/i;return wb&&wb.SheetNames.find(n=>re.test(n))}
+function sheetFor(v){const re=v==='serv'?/a^/:v==='prod'?/^\s*all\s*farmacia\s*$/i:v==='det'?/^\s*detalles?\s+m[eé]dicos\s*$/i:v==='med'?/^\s*m[eé]dicos\s*$/i:/^\s*especialidades\s*$/i;return wb&&wb.SheetNames.find(n=>re.test(n))}
 function switchView(v){
   view=v;setTabs();sortDir=null;
   const nm=sheetFor(v);
@@ -423,7 +436,7 @@ function renderDetail(){
   if(!q&&!selDoc.size&&!selEsp.size&&detData.general){const g=detData.general;h+=`<tr class="gen"><td>${g.name}</td><td>${fmt(g.mon)}</td><td>${g.pac}</td><td>${fmt(g.prom)}</td></tr>`}
   $('pv').innerHTML=h;
 }
-$('q').oninput=()=>{if($('c3').classList.contains('hide'))return;if(view==='det')renderDetail();else if(view==='prod')renderProd()};
+$('q').oninput=()=>{if($('c3').classList.contains('hide'))return;if(view==='det')renderDetail();else if(view==='prod')renderProd();else if(view==='serv')renderServ()};
 $('tDet').onclick=()=>switchView('det');
 
 
@@ -538,7 +551,126 @@ function renderProd(){
 }
 $('tProd').onclick=()=>switchView('prod');
 
+
+/* ===== SERVICIOS ===== */
+let servData=null,servSel={esp:new Set(),sem:new Set(),doc:new Set()},servOpen=null,servTxt={esp:'',doc:''},servLst={esp:[],doc:[]};
+function servSource(){
+  const tries=[];
+  wb.SheetNames.filter(n=>/^\s*(bd|export)\s*$/i.test(n)).forEach(nm=>tries.push({a:XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:true,defval:''}),auto:true}));
+  tries.push({a:aoa,auto:false});
+  for(const t of tries){
+    if(t.auto){
+      for(let i=0;i<Math.min(15,t.a.length);i++){
+        const h=t.a[i].map(x=>String(x).trim().toLowerCase());
+        const f=res=>{for(const re of res){const k=h.findIndex(x=>re.test(x));if(k>=0)return k}return -1};
+        const o={a:t.a,hi:i,iE:f([/^especialidad$/,/especialidad/]),iD:f([/^medico$/,/medico|doctor/]),iR:f([/^tipo_rubro$/,/rubro/]),iT:f([/^tarifa$/,/servicio|tarifa|descripcion|prestacion/]),iQ:f([/^cantidad$/,/cantid/]),iM:f([/^montoneto$/,/monto|importe|costo|gasto|valor/]),iP:f([/^historia$/,/^paciente$/,/dni|documento/,/^id$/]),iF:f([/^fec_registro_pm_2$/,/^fecha$/,/^fec/]),iS:f([/^semana$/,/semana/])};
+        if(o.iD>=0&&o.iT>=0&&o.iM>=0)return o;
+      }
+    }else{
+      const o={a:aoa,hi:Math.max(1,+$('hrow').value||1)-1,iE:+$('cEsp').value,iD:+$('cMed').value,iR:+$('cRub').value,iT:+$('cTar').value,iQ:+$('cCan').value,iM:+$('cMon').value,iP:+$('cPac').value,iF:+$('cFec').value,iS:+$('cSem').value};
+      if(o.iD>=0&&o.iT>=0&&o.iM>=0)return o;
+    }
+  }
+  return null;
+}
+function genServ(){
+  const s=servSource();if(!s)return null;
+  const n=x=>{const v=toNum(x);return isNaN(v)?0:v};
+  const recs=[];
+  for(let i=s.hi+1;i<s.a.length;i++){
+    const r=s.a[i];
+    if(s.iR>=0&&!/^servicios?$/i.test(String(r[s.iR]??'').trim()))continue;
+    const sv=String(r[s.iT]??'').trim().toUpperCase(),dn=String(r[s.iD]??'').trim().toUpperCase();
+    const mon=toNum(r[s.iM]);if(!sv||!dn||isNaN(mon))continue;
+    recs.push({esp:s.iE>=0?String(r[s.iE]??'').trim().toUpperCase():'',doc:dn,sv,mon,q:s.iQ>=0?n(r[s.iQ]):1,pid:s.iP>=0?String(r[s.iP]).trim():'f'+i,w:(s.iF>=0||s.iS>=0)?weekOf(r,s.iF,s.iS):0});
+  }
+  return recs.length?{recs}:null;
+}
+const escH=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+function servDocList(){
+  const set=new Set();
+  servData.recs.forEach(r=>{if(servSel.esp.size&&!servSel.esp.has(r.esp))return;if(servSel.sem.size&&!servSel.sem.has(r.w))return;set.add(r.doc)});
+  return [...set].sort();
+}
+function servPrune(){const ok=new Set(servDocList());[...servSel.doc].forEach(d=>{if(!ok.has(d))servSel.doc.delete(d)})}
+function servDD(title,key,list,sel){
+  const t=norm(servTxt[key]);
+  const shown=list.map((x,i)=>[x,i]).filter(([x])=>!t||norm(x).includes(t));
+  const label=sel.size===0?'Todos':sel.size===1?[...sel][0]:sel.size+' seleccionados';
+  const open=servOpen===key;
+  return `<div class="sf"><div class="sfl">${title}${sel.size?` · <span style="color:var(--ac)">${sel.size}</span>`:''}</div><div class="dd"><button class="ddb sfb1${sel.size?' act':''}" onclick="servTog('${key}',event)">${escH(label)} <span style="opacity:.6">▾</span></button>${sel.size?`<button class="slx" onclick="servClr('${key}')" title="Quitar filtro">✕</button>`:''}`+
+   `<div class="ddp" style="display:${open?'block':'none'}"><input class="ddq" id="sfq-${key}" placeholder="Buscar ${title.toLowerCase()}..." value="${escH(servTxt[key])}" oninput="servFil('${key}',this.value)"><div class="dda"><span onclick="servAll('${key}')">Marcar visibles</span><span onclick="servClr('${key}')">Limpiar</span><span style="margin-left:auto;color:var(--mut)">${shown.length} de ${list.length}</span></div><div class="ddl" id="sfl-${key}">${shown.map(([x,i])=>`<label class="ddi"><input type="checkbox" ${sel.has(x)?'checked':''} onchange="servPick('${key}',${i})"> ${escH(x)}</label>`).join('')||'<div class="msg">Sin coincidencias</div>'}</div></div></div></div>`;
+}
+function buildServFilters(){
+  const esps=[...new Set(servData.recs.map(r=>r.esp).filter(Boolean))].sort();
+  const ws=[...new Set(servData.recs.map(r=>r.w).filter(Boolean))].sort();
+  const docs=servDocList();
+  servLst={esp:esps,doc:docs};
+  const any=servSel.esp.size||servSel.sem.size||servSel.doc.size;
+  $('servFilters').innerHTML=`<div class="sfb">`+
+    servDD('ESPECIALIDAD','esp',esps,servSel.esp)+
+    (ws.length?`<div class="sf"><div class="sfl">SEMANA</div><div style="display:flex;gap:6px;flex-wrap:wrap">${ws.map(w=>`<button class="pill${servSel.sem.has(w)?' on':''}" onclick="servWk(${w})">Sem ${w}</button>`).join('')}</div></div>`:'')+
+    `<div class="sf"><div class="sfl">TIPO DE RUBRO</div><div class="sbadge">🧾 SERVICIOS</div></div>`+
+    servDD('MÉDICO','doc',docs,servSel.doc)+
+    (any?`<div class="sf"><div class="sfl">&nbsp;</div><button class="sec" onclick="servReset()">✕ Limpiar filtros</button></div>`:'')+
+    `</div>`;
+}
+function servRefresh(k){
+  const sc=k&&$('sfl-'+k)?$('sfl-'+k).scrollTop:0;
+  buildServFilters();renderServ();
+  if(k&&sc&&$('sfl-'+k))$('sfl-'+k).scrollTop=sc;
+}
+function servTog(k,e){e.stopPropagation();servOpen=servOpen===k?null:k;buildServFilters();if(servOpen){const el=$('sfq-'+k);if(el)el.focus()}}
+function servFil(k,v){servTxt[k]=v;buildServFilters();const el=$('sfq-'+k);if(el){el.focus();el.setSelectionRange(v.length,v.length)}}
+function servPick(k,i){
+  const set=servSel[k],v=servLst[k][i];
+  set.has(v)?set.delete(v):set.add(v);
+  if(k==='esp')servPrune();
+  servRefresh(k);
+}
+function servAll(k){
+  const t=norm(servTxt[k]);
+  servLst[k].forEach(x=>{if(!t||norm(x).includes(t))servSel[k].add(x)});
+  if(k==='esp')servPrune();
+  servRefresh(k);
+}
+function servClr(k){servSel[k].clear();if(k==='esp')servPrune();servRefresh(k)}
+function servWk(w){servSel.sem.has(w)?servSel.sem.delete(w):servSel.sem.add(w);servPrune();servRefresh()}
+function servReset(){servSel={esp:new Set(),sem:new Set(),doc:new Set()};servTxt={esp:'',doc:''};servOpen=null;servRefresh()}
+document.addEventListener('click',e=>{if(servOpen&&view==='serv'&&e.target.closest&&!e.target.closest('.dd')){servOpen=null;buildServFilters()}});
+function servRows(){
+  const q=norm($('q').value.trim());
+  const m=new Map(),allP=new Set();let tm=0,tq=0;
+  servData.recs.forEach(r=>{
+    if(servSel.esp.size&&!servSel.esp.has(r.esp))return;
+    if(servSel.sem.size&&!servSel.sem.has(r.w))return;
+    if(servSel.doc.size&&!servSel.doc.has(r.doc))return;
+    if(q&&!norm(r.sv).includes(q))return;
+    if(!m.has(r.sv))m.set(r.sv,{name:r.sv,mon:0,cant:0,pacS:new Set()});
+    const o=m.get(r.sv);o.mon+=r.mon;o.cant+=r.q;o.pacS.add(r.pid);allP.add(r.pid);tm+=r.mon;tq+=r.q;
+  });
+  const rows=[...m.values()].map(o=>{const pac=o.pacS.size;return{name:o.name,mon:o.mon,pac,cant:o.cant,prom:pac?o.mon/pac:0}}).sort((a,b)=>b.mon-a.mon);
+  const pac=allP.size;
+  return{rows,total:{name:'Total general',mon:tm,pac,cant:tq,prom:pac?tm/pac:0}};
+}
+function renderServ(){
+  const {rows,total}=servRows();
+  const th='background:#bde4f3;color:#000;font-size:13px';
+  const ps=rows.map(r=>r.prom);rLo=ps.length?Math.min(...ps):0;rHi=ps.length?Math.max(...ps):1;
+  let h=`<tr><th style="${th};text-align:left">SERVICIOS</th><th style="${th}">MONTO</th><th style="${th}">PACIENTES</th><th style="${th}">CANTIDAD</th><th style="${th}">PROMEDIO</th></tr>`;
+  rows.forEach(r=>{h+=`<tr><td style="text-align:left">${escH(r.name)}</td><td>${fmt(r.mon)}</td><td>${r.pac}</td><td>${r.cant}</td><td style="${stRatio(r.prom)}">${fmt(r.prom)}</td></tr>`});
+  if(!rows.length)h+='<tr><td colspan="5" style="text-align:center">Sin resultados</td></tr>';
+  else h+=`<tr class="gen"><td style="text-align:left">${total.name}</td><td>${fmt(total.mon)}</td><td>${total.pac}</td><td>${total.cant}</td><td>${fmt(total.prom)}</td></tr>`;
+  $('pv').innerHTML=h;
+}
+$('tServ').onclick=()=>switchView('serv');
+
 $('gen').onclick=()=>{
+  if(view==='serv'){
+    const d=genServ();
+    if(!d){$('c2').classList.remove('hide');$('gmsg').textContent='Para servicios necesito las columnas Médico, Rubro de gasto (SERVICIOS), Producto / Tarifa (nombre del servicio) y Monto, en la hoja BD o EXPORT.';return}
+    servData=d;servSel={esp:new Set(),sem:new Set(),doc:new Set()};servOpen=null;servTxt={esp:'',doc:''};buildServFilters();renderServ();$('c3').classList.remove('hide');document.body.classList.add('has-data');$('c2').classList.add('hide');return;
+  }
   if(view==='prod'){
     const d=genProd();
     if(!d||!d.groups.length){$('c2').classList.remove('hide');$('gmsg').textContent='Para medicamentos necesito las columnas Producto/Tarifa, Médico y Monto (o la hoja "ALL FARMACIA").';return}
@@ -659,6 +791,7 @@ function getRaw(){
   }
   return null;
 }
+function avgColor(p){return p<135?'#2e9e4f':(p<=192.7?'#f2b705':'#d93025')}
 function closeDays(){const m=$('mdl');if(m)m.remove()}
 function openDays(ri){
   const r=shownRows[ri];if(!r)return;
@@ -691,11 +824,15 @@ function openDays(ri){
       const best=list.find(x=>x.mon===maxM);
       const maxP=Math.max(...list.map(x=>x.pac.size));
       const bestP=list.find(x=>x.pac.size===maxP);
-      html=head+`<div style="margin-bottom:10px;font-size:14px;line-height:1.6">⭐ <b>Mejor día en ventas:</b> ${lab(best.k)} — ${fmt(best.mon)} (${best.pac.size} pacientes)<br>`+
-        (bestP.k!==best.k?`👥 <b>Día con más pacientes:</b> ${lab(bestP.k)} — ${bestP.pac.size} pacientes (${fmt(bestP.mon)})<br>`:'')+
-        `📊 <b>${list.length}</b> días con ventas · Total ${fmt(tot)} · Promedio por día ${fmt(tot/list.length)}</div>`+
+      const cV=+$('cpm').value||192.7,gV=+$('mrg').value||135;
+      const dl=list.map(x=>({x,t:x.pac.size?x.mon/x.pac.size:0})).filter(o=>o.x.pac.size>0);
+      const dR=dl.filter(o=>o.t>cV),dY=dl.filter(o=>o.t>=gV&&o.t<=cV),dG=dl.filter(o=>o.t<gV);
+      const tkl=(ic,tit,arr,pick)=>{if(!arr.length)return'';const o=pick(arr);return `${ic} <b>${tit}:</b> ${lab(o.x.k)} — ticket ${fmt(o.t)} (${((o.t/cV-1)*100).toFixed(2)}%) · ${o.x.pac.size} pacientes · ${arr.length} ${arr.length===1?'día':'días'} en este color<br>`};
+      const tk=tkl('🔴','Ticket con mayor desviación',dR,a=>a.reduce((m,o)=>o.t>m.t?o:m))+tkl('🟡','Ticket con alerta',dY,a=>a.reduce((m,o)=>o.t>m.t?o:m))+tkl('🟢','Mejor ticket',dG,a=>a.reduce((m,o)=>o.t<m.t?o:m));
+      html=head+`<div style="margin-bottom:10px;font-size:14px;line-height:1.6">${tk}</div>`+
+        `<div style="margin-bottom:8px;font-size:12px;display:flex;gap:14px;flex-wrap:wrap;align-items:center"><b>Evolución según promedio:</b><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#2e9e4f;vertical-align:middle"></i> menos de S/ 135</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f2b705;vertical-align:middle"></i> S/ 135 a 192.70</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#d93025;vertical-align:middle"></i> más de S/ 192.70</span></div>`+
         `<table><tr><th>DÍA</th><th>MONTO</th><th>PACIENTES</th><th>PROMEDIO</th><th>EVOLUCIÓN</th></tr>`+
-        list.map(x=>`<tr${x===best?' class="best"':''}><td style="text-align:left">${x===best?'⭐ ':''}${lab(x.k)}</td><td>${fmt(x.mon)}</td><td>${x.pac.size}</td><td>${fmt(x.pac.size?x.mon/x.pac.size:0)}</td><td class="bc"><div class="bar" style="width:${maxM>0?Math.max(2,x.mon/maxM*100):2}%"></div></td></tr>`).join('')+
+        list.map(x=>`<tr${x===best?' class="best"':''}><td style="text-align:left">${x===best?'⭐ ':''}${lab(x.k)}</td><td>${fmt(x.mon)}</td><td>${x.pac.size}</td><td>${fmt(x.pac.size?x.mon/x.pac.size:0)}</td><td class="bc"><div class="bar" style="width:${maxM>0?Math.max(2,x.mon/maxM*100):2}%;background:${avgColor(x.pac.size?x.mon/x.pac.size:0)}"></div></td></tr>`).join('')+
         `<tr style="font-weight:bold"><td style="text-align:left">TOTAL</td><td>${fmt(tot)}</td><td>${r.pac}</td><td>${fmt(r.pac?tot/r.pac:0)}</td><td></td></tr></table>`;
     }
   }
@@ -707,6 +844,14 @@ function openDays(ri){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDays()});
 $('exp').onclick=()=>{
+  if(view==='serv'){
+    const {rows,total}=servRows();
+    const data=[['SERVICIOS','MONTO','PACIENTES','CANTIDAD','PROMEDIO']];
+    rows.forEach(r=>data.push([r.name,+r.mon.toFixed(2),r.pac,r.cant,+r.prom.toFixed(2)]));
+    data.push(['TOTAL GENERAL',+total.mon.toFixed(2),total.pac,total.cant,+total.prom.toFixed(2)]);
+    const bk=XLSX.utils.book_new();XLSX.utils.book_append_sheet(bk,XLSX.utils.aoa_to_sheet(data),'Servicios');
+    XLSX.writeFile(bk,'servicios.xlsx');return;
+  }
   if(view==='prod'){
     const data=[['PRODUCTO','MÉDICO','PACIENTES','MONTO','CANTIDAD','PROMEDIO']];
     const rt=o=>o.cant?+(o.mon/o.cant).toFixed(2):'';
