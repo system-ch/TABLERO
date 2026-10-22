@@ -107,7 +107,6 @@ button.nav.on{background:rgba(255,255,255,.14);color:#fff;border-left-color:#d4a
   <button class="nav" id="tDet">📋 Detalle</button>
   <button class="nav" id="tProd">💊 Medicamentos</button>
   <div class="side-foot">
-    <button class="nav" id="shortcut">📲 Instalar app</button>
     <button class="nav" id="adj">⚙ Ajustar columnas</button>
     <button class="nav" id="reset2">📂 Cambiar archivo</button>
   </div>
@@ -622,18 +621,7 @@ function makeIco(){
   let s='';for(let i=0;i<out.length;i++)s+=String.fromCharCode(out[i]);
   return btoa(s);
 }
-let dPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dPrompt=e});
-window.addEventListener('appinstalled',()=>{dPrompt=null;alert('Listo: la app quedó instalada con su icono.')});
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
-$('shortcut').onclick=async()=>{
-  const ua=navigator.userAgent,ios=/iphone|ipad|ipod/i.test(ua);
-  if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone){alert('La app ya está instalada en este dispositivo.');return}
-  if(dPrompt){dPrompt.prompt();await dPrompt.userChoice;dPrompt=null;return}
-  if(ios){alert('En iPhone/iPad (Safari):\n1. Toca el botón Compartir (cuadro con flecha).\n2. Elige "Agregar a pantalla de inicio".\n3. Toca Agregar.');return}
-  if(!/^https?:$/.test(location.protocol)){alert('Para instalar, abre el sistema desde su dirección web (https://...) y no desde un archivo guardado en la computadora.');return}
-  alert('En Chrome/Edge: abre el menú ⋮ y elige "Instalar app" (o "Agregar a pantalla de inicio" en el celular).');
-};
 let shownRows=[];
 function dateKey(v){
   let y,m,d;
