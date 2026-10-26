@@ -1392,7 +1392,6 @@ async function cloudSync(){
   }catch(e){toast('Sin conexión con la nube: '+e.message,true)}
 }
 const clinicReady=idbAll().then(m=>{Object.keys(m).forEach(k=>{if(CLINICS[k]&&m[k]&&m[k].buf)clinicBuf[k]=m[k]})}).then(cloudSync).catch(()=>{});
-clinicReady.then(()=>{let l=null;try{l=localStorage.getItem('ocana_last')}catch(e){}if(l&&CLINICS[l]&&clinicBuf[l])chooseClinic(l)});
 </script>
 </body>
 </html>
