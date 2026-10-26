@@ -232,6 +232,7 @@ function setTabs(){
 function sheetFor(v){const re=(v==='serv'||v==='aten')?/a^/:v==='prod'?/^\s*all\s*farmacia\s*$/i:v==='det'?/^\s*detalles?\s+m[eé]dicos\s*$/i:v==='med'?/^\s*m[eé]dicos\s*$/i:/^\s*especialidades\s*$/i;return wb&&wb.SheetNames.find(n=>re.test(n))}
 function switchView(v){
   view=v;setTabs();sortDir=null;
+  const atenBar=$('atenKpiBar');if(atenBar)atenBar.style.display=v==='aten'?'grid':'none';
   const nm=sheetFor(v);
   if(nm){if($('sheet').value!==nm){$('sheet').value=nm;readSheet(true)}else $('gen').onclick();return}
   $('gen').onclick();
@@ -632,11 +633,11 @@ function servSource(){
       for(let i=0;i<Math.min(15,t.a.length);i++){
         const h=t.a[i].map(x=>String(x).trim().toLowerCase());
         const f=res=>{for(const re of res){const k=h.findIndex(x=>re.test(x));if(k>=0)return k}return -1};
-        const o={a:t.a,hi:i,iE:f([/^especialidad$/,/especialidad/]),iD:f([/^medico$/,/medico|doctor/]),iR:f([/^tipo_rubro$/,/rubro/]),iT:f([/^tarifa$/,/servicio|tarifa|descripcion|prestacion/]),iQ:f([/^cantidad$/,/cantid/]),iM:f([/^montoneto$/,/monto|importe|costo|gasto|valor/]),iP:f([/^historia$/,/^paciente$/,/dni|documento/,/^id$/]),iF:f([/^fec_registro_pm_2$/,/^fecha$/,/^fec/]),iS:f([/^semana$/,/semana/]),iO:f([/^origen$/,/origen/]),iN:f([/^num_regambulat$/,/regambulat/,/num.*reg.*amb/]),iX:f([/^diagnostico$/,/^desc.*diagn|diagn.*desc/,/diagn/]),iPN:f([/^paciente$/,/^nombre_paciente$/,/^nom.*pac/,/pac.*nom/,/paciente/,/^apellidos? y nombres?$/])};
+        const o={a:t.a,hi:i,iE:f([/^especialidad$/,/especialidad/]),iD:f([/^medico$/,/medico|doctor/]),iR:f([/^tipo_rubro$/,/rubro/]),iT:f([/^tarifa$/,/servicio|tarifa|descripcion|prestacion/]),iQ:f([/^cantidad$/,/cantid/]),iM:f([/^montoneto$/,/monto|importe|costo|gasto|valor/]),iP:f([/^historia$/,/^paciente$/,/dni|documento/,/^id$/]),iHC:f([/^historia$/,/historia.?cl[ií]nica/,/^n[uú]mero.?hc$/,/^nro.?hc$/,/^hc$/]),iF:f([/^fec_registro_pm_2$/,/^fecha$/,/^fec/]),iS:f([/^semana$/,/semana/]),iO:f([/^origen$/,/origen/]),iN:f([/^num_regambulat$/,/regambulat/,/num.*reg.*amb/]),iX:f([/^diagnostico$/,/^desc.*diagn|diagn.*desc/,/diagn/]),iPN:f([/^paciente$/,/^nombre_paciente$/,/^nom.*pac/,/pac.*nom/,/paciente/,/^apellidos? y nombres?$/])};
         if(o.iD>=0&&o.iT>=0&&o.iM>=0)return o;
       }
     }else{
-      const o={a:aoa,hi:Math.max(1,+$('hrow').value||1)-1,iE:+$('cEsp').value,iD:+$('cMed').value,iR:+$('cRub').value,iT:+$('cTar').value,iQ:+$('cCan').value,iM:+$('cMon').value,iP:+$('cPac').value,iF:+$('cFec').value,iS:+$('cSem').value,iO:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/origen/.test(x))})(),iPN:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/paciente/.test(x)&&!/dni|doc|hist/.test(x))})(),iN:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/regambulat/.test(x))})(),iX:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/diagn/.test(x))})()};
+      const o={a:aoa,hi:Math.max(1,+$('hrow').value||1)-1,iE:+$('cEsp').value,iD:+$('cMed').value,iR:+$('cRub').value,iT:+$('cTar').value,iQ:+$('cCan').value,iM:+$('cMon').value,iP:+$('cPac').value,iF:+$('cFec').value,iS:+$('cSem').value,iHC:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/^historia$|historia.?cl[ií]nica|^n[uú]mero.?hc$|^nro.?hc$|^hc$/.test(x))})(),iO:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/origen/.test(x))})(),iPN:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/paciente/.test(x)&&!/dni|doc|hist/.test(x))})(),iN:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/regambulat/.test(x))})(),iX:(()=>{const h=(aoa[Math.max(1,+$('hrow').value||1)-1]||[]).map(x=>String(x).trim().toLowerCase());return h.findIndex(x=>/diagn/.test(x))})()};
       if(o.iD>=0&&o.iT>=0&&o.iM>=0)return o;
     }
   }
@@ -654,7 +655,7 @@ function genServ(){
     if(!dn)continue;
     if(!CONSULTAS_TARIFA.has(normT(sv)))continue;
     let mon=toNum(r[s.iM]);if(isNaN(mon))mon=0;
-    recs.push({esp:s.iE>=0?String(r[s.iE]??'').trim().toUpperCase():'',doc:dn,sv,mon,q:s.iQ>=0?n(r[s.iQ]):1,nr:s.iN>=0?String(r[s.iN]??'').trim():'',pn:s.iPN>=0?String(r[s.iPN]??'').trim().toUpperCase():'',dx:s.iX>=0?String(r[s.iX]??'').trim():'',fe:s.iF>=0?r[s.iF]:'',pid:s.iP>=0?String(r[s.iP]).trim():'f'+i,w:(s.iF>=0||s.iS>=0)?weekOf(r,s.iF,s.iS):0});
+    recs.push({esp:s.iE>=0?String(r[s.iE]??'').trim().toUpperCase():'',doc:dn,sv,mon,q:s.iQ>=0?n(r[s.iQ]):1,nr:s.iN>=0?String(r[s.iN]??'').trim():'',pn:s.iPN>=0?String(r[s.iPN]??'').trim().toUpperCase():'',dx:s.iX>=0?String(r[s.iX]??'').trim():'',hc:s.iHC>=0?String(r[s.iHC]??'').trim():'',fe:s.iF>=0?r[s.iF]:'',pid:s.iP>=0?String(r[s.iP]).trim():'f'+i,w:(s.iF>=0||s.iS>=0)?weekOf(r,s.iF,s.iS):0});
   }
   return recs.length?{recs,hasNr:s.iN>=0,hasPn:s.iPN>=0}:null;
 }
@@ -815,8 +816,8 @@ function servRot(i){
   const th='background:#bde4f3;color:#000;font-size:13px';
   const rows=x.r.slice().sort((a,b)=>(a.pn||a.pid)<(b.pn||b.pid)?-1:(a.pn||a.pid)>(b.pn||b.pid)?1:0);
   const manyP=new Set(rows.map(r=>r.pn||r.pid)).size>1,manyD=new Set(rows.map(r=>r.doc)).size>1;
-  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:16px">${escH(x.n)} — ${rows.length} registros</b><button onclick="closeDays()">✕ Cerrar</button></div><table class="pv"><tr>${manyP?`<th style="${th};text-align:left">PACIENTE</th>`:''}${manyD?`<th style="${th};text-align:left">MÉDICO</th>`:''}<th style="${th}">REGAM</th><th style="${th}">FEC_REGISTRO_PM_2</th><th style="${th};text-align:left">DIAGNÓSTICO</th></tr>`;
-  rows.forEach(r=>{h+=`<tr>${manyP?`<td style="text-align:left">${escH(r.pn||r.pid)}</td>`:''}${manyD?`<td style="text-align:left">${escH(r.doc)}</td>`:''}<td>${escH(r.nr)}</td><td>${escH(fmtFe(r.fe))}</td><td style="text-align:left;white-space:normal">${escH(r.dx)}</td></tr>`});
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:16px">${escH(x.n)} — ${rows.length} registros</b><button onclick="closeDays()">✕ Cerrar</button></div><table class="pv"><tr>${manyP?`<th style="${th};text-align:left">PACIENTE</th>`:''}${manyD?`<th style="${th};text-align:left">MÉDICO</th>`:''}<th style="${th}">REGAM</th><th style="${th}">FEC_REGISTRO_PM_2</th><th style="${th};text-align:left">DIAGNÓSTICO</th><th style="${th};text-align:left">HISTORIA CLÍNICA</th></tr>`;
+  rows.forEach(r=>{h+=`<tr>${manyP?`<td style="text-align:left">${escH(r.pn||r.pid)}</td>`:''}${manyD?`<td style="text-align:left">${escH(r.doc)}</td>`:''}<td>${escH(r.nr)}</td><td>${escH(fmtFe(r.fe))}</td><td style="text-align:left;white-space:normal">${escH(r.dx)}</td><td style="text-align:left">${escH(r.hc||'—')}</td></tr>`});
   h+='</table>';
   closeDays();
   const d=document.createElement('div');d.className='mdl';d.id='mdl';
@@ -850,7 +851,17 @@ function renderServ(){
 $('tServ').onclick=()=>switchView('serv');
 
 /* ===== ATENCIÓN DE PACIENTES ===== */
-let atenShown=[],atenData=null,atenRub='*',atenMin=0,atenSort='mon',atenOpen=new Set(),atenKeys=[],atenRubL=[];
+let atenShown=[],atenData=null,atenRub='*',atenMin=0,atenSort='mon',atenOpen=new Set(),atenKeys=[],atenRubL=[],atenChecked=new Set(),atenFactor=10;
+function atenKpis(){
+  const chosen=atenShown.filter(p=>atenChecked.has(p.name));
+  const selected=chosen.reduce((s,p)=>s+p.mon,0),target=192.7*atenFactor,diff=selected-target;
+  const put=(id,v)=>{const el=$(id);if(el)el.textContent=fmt(atenR2(v))};
+  put('atenSum',selected);put('atenTarget',target);put('atenDiff',diff);
+  const c=$('atenCount');if(c)c.textContent=chosen.length+' seleccionados';
+  const d=$('atenDiff');if(d)d.style.color=diff<0?'#b42318':diff>0?'#087443':'var(--tx)';
+}
+function atenCheck(i,checked){const p=atenShown[i];if(!p)return;checked?atenChecked.add(p.name):atenChecked.delete(p.name);atenKpis()}
+function atenSetFactor(el){const n=el.valueAsNumber;atenFactor=Number.isFinite(n)&&n>=0?n:0;atenKpis()}
 const atenR2=n=>Math.round(n*100)/100;
 const atenLab=k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return k;const [y,m,d]=k.split('-'),DN=['dom','lun','mar','mié','jue','vie','sáb'];return DN[new Date(+y,+m-1,+d).getDay()]+' '+d+'/'+m+'/'+y};
 function genAten(){
@@ -902,18 +913,23 @@ function renderAten(){
     `<div class="sf"><div class="sfl">RUBRO / TIPO</div><div style="display:flex;gap:6px;flex-wrap:wrap">${rubPills}</div></div>`+
     `<div class="sf"><div class="sfl">SERVICIOS POR PACIENTE</div><div style="display:flex;gap:6px">${[[0,'Todos'],[2,'2 o más'],[3,'3 o más'],[5,'5 o más']].map(([n,t])=>pill(atenMin===n,`atenSetMin(${n})`,t)).join('')}</div></div>`+
     `<div class="sf"><div class="sfl">ORDENAR (MAYOR A MENOR)</div><div style="display:flex;gap:6px">${[['mon','Monto'],['srv','Servicios'],['dias','Días']].map(([k,t])=>pill(atenSort===k,`atenSetSort('${k}')`,t)).join('')}</div></div>`+
-    `<div class="sf"><div class="sfl">RESUMEN</div><div style="display:flex;gap:6px"><span class="sbadge">${list.length} pacientes</span><span class="sbadge">${tN} servicios</span><span class="sbadge">${fmt(tM)}</span></div></div>`+
     `</div>`;
+  let kpiBar=$('atenKpiBar');
+  if(!kpiBar){kpiBar=document.createElement('div');kpiBar.id='atenKpiBar';kpiBar.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:12px;margin:0 0 12px';$('servFilters').insertAdjacentElement('afterend',kpiBar)}
+  kpiBar.innerHTML=`<div class="sfb" style="display:block"><div class="sfl">SUMA DE MONTOS MARCADOS</div><strong id="atenSum" style="font-size:23px">S/ 0.00</strong><div id="atenCount" style="font-size:12px;color:var(--mut)">0 seleccionados</div></div>`+
+    `<div class="sfb" style="display:block"><div class="sfl">META: S/ 192.70 × FACTOR</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><strong id="atenTarget" style="font-size:23px">S/ 1,927.00</strong><label style="font-size:12px">× <input aria-label="Factor de meta" type="number" min="0" step="1" value="${atenFactor}" oninput="atenSetFactor(this)" style="width:78px;padding:6px"></label></div></div>`+
+    `<div class="sfb" style="display:block"><div class="sfl">DIFERENCIA: SELECCIONADO − META</div><strong id="atenDiff" style="font-size:23px">S/ 0.00</strong></div>`;
   const th='background:#bde4f3;color:#000;font-size:13px';
   const arr=k=>atenSort===k?' ▼':' ⇅';
   const sh=(k,t)=>`<th style="${th};cursor:pointer" title="Ordenar de mayor a menor" onclick="atenSetSort('${k}')">${t}${arr(k)}</th>`;
   let h=`<tr><th style="${th}">N°</th><th style="${th};text-align:left">PACIENTE</th>${sh('dias','DÍAS DE ATENCIÓN')}${sh('srv','SERVICIOS')}<th style="${th}">CANTIDAD</th>${sh('mon','MONTO TOTAL')}</tr>`;
   list.forEach((p,i)=>{
-    h+=`<tr style="background:#d9d9d9;font-weight:bold"><td style="text-align:center">${i+1}</td><td style="text-align:left;cursor:pointer;text-decoration:underline dotted" title="Ver detalle del paciente" onclick="atenModal(${i})">${escH(p.name)}${p.pid?` <span style="font-weight:normal;color:#444;font-size:12px">· ${escH(p.pid)}</span>`:''}</td><td>${p.days.size}</td><td>${p.n}</td><td>${atenR2(p.q)}</td><td>${fmt(p.mon)}</td></tr>`;
+    h+=`<tr style="background:#d9d9d9;font-weight:bold"><td style="text-align:center">${i+1}</td><td style="text-align:left;cursor:pointer;text-decoration:underline dotted" title="Ver detalle del paciente" onclick="atenModal(${i})">${escH(p.name)}${p.pid?` <span style="font-weight:normal;color:#444;font-size:12px">· ${escH(p.pid)}</span>`:''}</td><td>${p.days.size}</td><td>${p.n}</td><td>${atenR2(p.q)}</td><td><label style="display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><input type="checkbox" aria-label="Sumar monto del paciente ${escH(p.name)}" onchange="atenCheck(${i},this.checked)" ${atenChecked.has(p.name)?'checked':''}>${fmt(p.mon)}</label></td></tr>`;
   });
   if(!list.length)h+='<tr><td colspan="6" style="text-align:center">Sin resultados</td></tr>';
   else h+=`<tr class="gen"><td></td><td style="text-align:left">Total general · ${list.length} pacientes</td><td>${tD}</td><td>${tN}</td><td>${atenR2(tQ)}</td><td>${fmt(tM)}</td></tr>`;
   $('pv').innerHTML=h;
+  atenKpis();
 }
 
 function atenModal(i){
@@ -940,7 +956,7 @@ $('gen').onclick=()=>{
   if(view==='aten'){
     const d=genAten();
     if(!d||d.err){$('c2').classList.remove('hide');$('gmsg').textContent=d&&d.err?'Para atención de pacientes necesito la columna Paciente (nombre o DNI / HC).':'Para atención de pacientes necesito las columnas Médico, Producto / Tarifa, Paciente, Monto y Fecha, en la hoja BD o EXPORT.';return}
-    atenData=d;atenRub='*';atenMin=0;atenSort='mon';atenOpen=new Set();$('q').value='';
+    atenData=d;atenRub='*';atenMin=0;atenSort='mon';atenOpen=new Set();atenChecked=new Set();$('q').value='';
     renderAten();$('c3').classList.remove('hide');document.body.classList.add('has-data');$('c2').classList.add('hide');return;
   }
   if(view==='serv'){
